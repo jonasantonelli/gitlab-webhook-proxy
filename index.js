@@ -1,7 +1,11 @@
 const bodyParser = require("body-parser");
+const { Logtail } = require("@logtail/node");
 const express = require("express");
 const fetch = require("node-fetch");
 const { stringify } = require("query-string");
+
+
+const logtail = new Logtail("rA4PysGjttSy9F1hv3GabxBq");
 
 const { REST_API, TOKEN } = process.env;
 
@@ -47,8 +51,8 @@ function getStatus(build) {
 async function setCommitStatus(build, repoId) {
 	const status = getStatus(build);
 
-	console.log(build);
-	console.log(status);
+	logtail.info(build);
+	logtail.info(status);
 
 	const queryString = stringify({
 		context: "UI Tests",
@@ -56,7 +60,7 @@ async function setCommitStatus(build, repoId) {
 		...status,
 	});
 
-	console.log(
+	logtail.info(
 		`POSTING to ${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`
 	);
 
@@ -70,8 +74,8 @@ async function setCommitStatus(build, repoId) {
 		}
 	);
 
-	console.log(result);
-	console.log(await result.text());
+	logtail.info(result);
+	logtail.info(await result.text());
 }
 
 const app = express();
@@ -83,7 +87,7 @@ app.post("/webhook", async (req, res) => {
 
 	if (!repoId) {
 		const error = "Need a repoId query param on webhook URL";
-		console.log(error);
+		logtail.error(error);
 		return res.status(400).send(error);
 	}
 
@@ -91,7 +95,9 @@ app.post("/webhook", async (req, res) => {
 		await setCommitStatus(build, repoId);
 	}
 
+	logtail.flush();
 	res.end("OK");
+
 });
 
 const { PORT = 3000 } = process.env;
