@@ -51,31 +51,39 @@ function getStatus(build) {
 async function setCommitStatus(build, repoId) {
 	const status = getStatus(build);
 
-	logtail.info(build);
-	logtail.info(status);
+	logtail.info("build", build);
+	logtail.info("status", status);
 
-	const queryString = stringify({
-		context: "UI Tests",
-		"target_url": build.webUrl,
-		...status,
-	});
+	logtail.flush();
+	
+	try {
+		const queryString = stringify({
+			context: "UI Tests",
+			"target_url": build.webUrl,
+			...status,
+		});
 
-	logtail.info(
-		`POSTING to ${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`
-	);
+		logtail.info(
+			`POSTING to ${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`
+		);
 
-	const result = await fetch(
-		`${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`,
-		{
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${TOKEN}`,
-			},
-		}
-	);
+		const result = await fetch(
+			`${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${TOKEN}`,
+				},
+			}
+		);
 
-	logtail.info(result);
-	logtail.info(await result.text());
+		logtail.info(result);
+		logtail.info(await result.text());
+		logtail.flush();
+	} catch (e) {
+		logtail.error(e.message);
+		logtail.flush();
+	}
 }
 
 const app = express();
@@ -95,7 +103,6 @@ app.post("/webhook", async (req, res) => {
 		await setCommitStatus(build, repoId);
 	}
 
-	logtail.flush();
 	res.end("OK");
 
 });
