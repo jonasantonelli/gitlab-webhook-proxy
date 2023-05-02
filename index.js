@@ -1,11 +1,7 @@
 const bodyParser = require("body-parser");
-const { Logtail } = require("@logtail/node");
 const express = require("express");
 const fetch = require("node-fetch");
 const { stringify } = require("query-string");
-
-
-const logtail = new Logtail("rA4PysGjttSy9F1hv3GabxBq");
 
 const { REST_API, TOKEN } = process.env;
 
@@ -14,7 +10,7 @@ function getStatus(build) {
 		case "FAILED":
 			return {
 				state: "failed",
-				description: `Build ${build.number} has suffered a system error. Please try again.`
+				description: `Build ${build.number} has suffered a system error. Please try again.`,
 			};
 		case "BROKEN":
 			return {
@@ -51,39 +47,31 @@ function getStatus(build) {
 async function setCommitStatus(build, repoId) {
 	const status = getStatus(build);
 
-	logtail.info("build", build);
-	logtail.info("status", status);
+	console.log(build);
+	console.log(status);
 
-	logtail.flush();
-	
-	try {
-		const queryString = stringify({
-			context: "UI Tests",
-			"target_url": build.webUrl,
-			...status,
-		});
+	const queryString = stringify({
+		context: "UI Tests",
+		"target_url": build.webUrl,
+		...status,
+	});
 
-		logtail.info(
-			`POSTING to ${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`
-		);
+	console.log(
+		`POSTING to ${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`
+	);
 
-		const result = await fetch(
-			`${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`,
-			{
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${TOKEN}`,
-				},
-			}
-		);
+	const result = await fetch(
+		`${REST_API}projects/${repoId}/statuses/${build.commit}?${queryString}`,
+		{
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${TOKEN}`,
+			},
+		}
+	);
 
-		logtail.info(result);
-		logtail.info(await result.text());
-		logtail.flush();
-	} catch (e) {
-		logtail.error(e.message);
-		logtail.flush();
-	}
+	console.log(result);
+	console.log(await result.text());
 }
 
 const app = express();
@@ -95,7 +83,7 @@ app.post("/webhook", async (req, res) => {
 
 	if (!repoId) {
 		const error = "Need a repoId query param on webhook URL";
-		logtail.error(error);
+		console.log(error);
 		return res.status(400).send(error);
 	}
 
@@ -104,7 +92,6 @@ app.post("/webhook", async (req, res) => {
 	}
 
 	res.end("OK");
-
 });
 
 const { PORT = 3000 } = process.env;
