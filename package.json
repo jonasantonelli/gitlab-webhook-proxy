@@ -2,7 +2,6 @@
   "name": "gitlab-webhook-proxy",
   "version": "1.0.0",
   "main": "index.js",
-  "author": "Tom Coleman <tom@thesnail.org>",
   "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
